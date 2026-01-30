@@ -662,6 +662,7 @@ section {
     inset: 0;
     overflow: hidden;
     opacity: 0.03;
+    z-index: -1;
 }
 
 .bg-shape {
@@ -868,7 +869,6 @@ section {
 }
 
 .footer-bottom {
-    grid-column: 1 / -1;
     text-align: center;
     padding-top: 2rem;
     margin-top: 2rem;
