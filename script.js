@@ -69,82 +69,85 @@ window.addEventListener('scroll', () => {
     lastScroll = currentScroll;
 });
 
-const EMAILJS_CONFIG = {
-    serviceID: 'YOUR_SERVICE_ID',
-    templateID: 'YOUR_TEMPLATE_ID',
-    publicKey: 'YOUR_PUBLIC_KEY'
-};
+emailjs.init('3TuN_athIqQt3IZXE');
 
-// Initialize EmailJS (uncomment when configured)
-// emailjs.init(EMAILJS_CONFIG.publicKey);
+function capitalizeWords(input) {
+    return input.value
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
 
-const contactForm = document.getElementById('contactForm');
-const formStatus = document.getElementById('formStatus');
+function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
 
-if (contactForm) {
-    contactForm.addEventListener('submit', async (e) => {
+const nameInput = document.querySelector('input[name="from_name"]');
+if (nameInput) {
+    nameInput.addEventListener('blur', function() {
+        this.value = capitalizeWords(this);
+    });
+}
+
+const emailInput = document.querySelector('input[name="reply_to"]');
+if (emailInput) {
+    emailInput.addEventListener('blur', function() {
+        if (this.value && !validateEmail(this.value)) {
+            this.setCustomValidity('Molimo unesite ispravnu email adresu');
+            this.reportValidity();
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+}
+
+emailjs.init('3TuN_athIqQt3IZXE');
+
+const form = document.getElementById('contactForm');
+if (form) {
+    form.addEventListener('submit', function(e) {
         e.preventDefault();
-
-        const formData = {
-            name: document.getElementById('name').value.trim(),
-            email: document.getElementById('email').value.trim(),
-            phone: document.getElementById('phone').value.trim(),
-            company: document.getElementById('company').value.trim(),
-            message: document.getElementById('message').value.trim()
-        };
-
-        if (!formData.name || !formData.email || !formData.message) {
-            showFormStatus('Molimo ispunite sva obavezna polja.', 'error');
+        
+        const btn = this.querySelector('.btn-submit');
+        const status = document.getElementById('formStatus');
+        const originalText = btn.textContent;
+        const email = this.querySelector('input[name="reply_to"]').value;
+        
+        // Provjeri email prije slanja
+        if (!validateEmail(email)) {
+            status.textContent = 'Molimo unesite ispravnu email adresu.';
+            status.className = 'form-status error';
             return;
         }
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.email)) {
-            showFormStatus('Molimo unesite ispravnu email adresu.', 'error');
-            return;
-        }
-
-        const submitBtn = contactForm.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = 'Šalje se...';
-
-        try {
-            // UNCOMMENT WHEN EMAILJS IS CONFIGURED:
-            /*
-            const response = await emailjs.send(
-                EMAILJS_CONFIG.serviceID,
-                EMAILJS_CONFIG.templateID,
-                {
-                    from_name: formData.name,
-                    from_email: formData.email,
-                    phone: formData.phone || 'Nije navedeno',
-                    company: formData.company || 'Nije navedeno',
-                    message: formData.message,
-                    to_name: 'KONTROL Tim'
-                }
-            );
-
-            if (response.status === 200) {
-                showFormStatus('Hvala! Vaša poruka je uspješno poslana. Kontaktirat ćemo Vas uskoro.', 'success');
-                contactForm.reset();
-            } else {
-                throw new Error('Email sending failed');
-            }
-            */
-
-            // DEMO MODE (remove when EmailJS is configured)
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            showFormStatus('Hvala! Vaša poruka je uspješno poslana. Kontaktirat ćemo Vas uskoro.', 'success');
-            contactForm.reset();
-
-        } catch (error) {
-            console.error('Error:', error);
-            showFormStatus('Došlo je do greške. Molimo pokušajte ponovno ili nas kontaktirajte telefonom.', 'error');
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
-        }
+        
+        btn.textContent = 'Šalje se...';
+        btn.disabled = true;
+        status.textContent = '';
+        
+        emailjs.sendForm('service_f0eln3q', 'template_pjdr7bs', this)
+            .then(() => {
+                return emailjs.sendForm('service_f0eln3q', 'template_9tu0edl', this);
+            })
+            .then(() => {
+                status.textContent = 'Poruka uspješno poslana!';
+                status.className = 'form-status success';
+                this.reset();
+                
+                setTimeout(() => {
+                    status.textContent = '';
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }, 3000);
+            })
+            .catch((error) => {
+                console.log('EmailJS Error:', error);
+                status.textContent = 'Greška prilikom slanja. Pokušajte ponovo.';
+                status.className = 'form-status error';
+                btn.textContent = originalText;
+                btn.disabled = false;
+            });
     });
 }
 
