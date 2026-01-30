@@ -115,7 +115,6 @@ if (form) {
         const originalText = btn.textContent;
         const email = this.querySelector('input[name="reply_to"]').value;
         
-        // Provjeri email prije slanja
         if (!validateEmail(email)) {
             status.textContent = 'Molimo unesite ispravnu email adresu.';
             status.className = 'form-status error';
